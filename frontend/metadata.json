@@ -1,0 +1,7 @@
+{
+  "name": "NEXUS STORE - Future Electronics",
+  "description": "A high-end, futuristic e-commerce platform for next-generation electronics featuring AI-powered shopping assistance.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
