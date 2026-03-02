@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import { ProductModel } from '../models/Product.js';
+import { Request, Response } from "express";
+import { ProductModel } from "../models/Product";
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
@@ -16,7 +16,7 @@ export const getProductById = async (req: Request, res: Response) => {
     if (product) {
       res.json(product);
     } else {
-      res.status(404).json({ message: 'Product not found' });
+      res.status(404).json({ message: "Product not found" });
     }
   } catch (error: any) {
     res.status(500).json({ message: error.message });

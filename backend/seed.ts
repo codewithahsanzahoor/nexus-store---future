@@ -82,9 +82,17 @@ const seedDB = async () => {
 
     // Seed Products
     const productsToInsert = PRODUCTS.map((p) => ({
-      ...p,
       productId: p.id,
-      isNewItem: p.isNew, // Mapping the static `isNew` to schema `isNewItem`
+      name: p.name,
+      category: p.category,
+      price: p.price,
+      oldPrice: p.oldPrice,
+      image: p.image,
+      description: p.description,
+      rating: p.rating,
+      reviews: p.reviews,
+      isBestseller: p.isBestseller || false,
+      isNew: p.isNew || false,
     }));
     await ProductModel.insertMany(productsToInsert);
     console.log("Products seeded.");
