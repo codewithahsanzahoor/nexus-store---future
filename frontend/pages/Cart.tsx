@@ -1,16 +1,27 @@
 
 import React from 'react';
-import { CartItem } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store/store';
+import { removeFromCart, updateQuantity } from '../store/slices/cartSlice';
 
-interface CartProps {
-  items: CartItem[];
-  onUpdate: (id: string, delta: number) => void;
-  onRemove: (id: string) => void;
-  onCheckout: () => void;
-}
+const Cart: React.FC = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const items = useSelector((state: RootState) => state.cart.items);
+  const subtotal = items.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
 
-const Cart: React.FC<CartProps> = ({ items, onUpdate, onRemove, onCheckout }) => {
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const handleUpdate = (id: string, delta: number) => {
+    const item = items.find((i: any) => i.id === id);
+    if (item) {
+      const newQty = Math.max(1, item.quantity + delta);
+      dispatch(updateQuantity({ id, quantity: newQty }));
+    }
+  };
+
+  const handleRemove = (id: string) => {
+    dispatch(removeFromCart(id));
+  };
 
   if (items.length === 0) {
     return (
@@ -46,18 +57,18 @@ const Cart: React.FC<CartProps> = ({ items, onUpdate, onRemove, onCheckout }) =>
                 <h3 className="font-bold text-lg text-white uppercase tracking-tight">{item.name}</h3>
                 <p className="text-sm text-slate-500 font-medium mb-3">{item.category}</p>
                 <button 
-                  onClick={() => onRemove(item.id)}
+                  onClick={() => handleRemove(item.id)}
                   className="text-xs text-red-500/70 hover:text-red-500 font-bold uppercase tracking-widest flex items-center gap-1"
                 >
                   <span className="material-symbols-outlined text-sm">delete</span> Remove
                 </button>
               </div>
               <div className="flex items-center gap-4 bg-black/40 p-1 rounded-lg border border-white/5">
-                <button onClick={() => onUpdate(item.id, -1)} className="size-8 flex items-center justify-center hover:text-primary transition-colors">
+                <button onClick={() => handleUpdate(item.id, -1)} className="size-8 flex items-center justify-center hover:text-primary transition-colors">
                   <span className="material-symbols-outlined text-sm">remove</span>
                 </button>
                 <span className="w-4 text-center font-bold text-sm">{item.quantity}</span>
-                <button onClick={() => onUpdate(item.id, 1)} className="size-8 flex items-center justify-center hover:text-primary transition-colors">
+                <button onClick={() => handleUpdate(item.id, 1)} className="size-8 flex items-center justify-center hover:text-primary transition-colors">
                   <span className="material-symbols-outlined text-sm">add</span>
                 </button>
               </div>
@@ -94,7 +105,7 @@ const Cart: React.FC<CartProps> = ({ items, onUpdate, onRemove, onCheckout }) =>
               <span className="text-xs text-slate-600 font-black">USD</span>
             </div>
             <button 
-              onClick={onCheckout}
+              onClick={() => navigate('/checkout')}
               className="w-full bg-primary text-background-dark font-black py-5 rounded-xl text-lg uppercase tracking-widest shadow-[0_0_30px_rgba(0,217,255,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               Checkout <span className="material-symbols-outlined">arrow_forward</span>

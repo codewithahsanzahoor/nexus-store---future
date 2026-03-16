@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../store/store";
+import { logout } from "../store/slices/authSlice";
 import AuthModal from "./AuthModal";
 
 interface HeaderProps {
@@ -10,7 +12,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ cartCount }) => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { user, logout } = useAuth();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.auth);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
@@ -79,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
                   {user.name.charAt(0).toUpperCase()}
                 </Link>
                 <button
-                  onClick={logout}
+                  onClick={() => dispatch(logout())}
                   className="p-2 hover:bg-white/5 rounded-full transition-colors text-slate-400 hover:text-red-400"
                   title="Logout"
                 >

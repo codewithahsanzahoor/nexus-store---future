@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
-
+import { useDispatch } from "react-redux";
+import { login } from "../store/slices/authSlice";
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { login } = useAuth();
+  const dispatch = useDispatch();
   const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +42,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         throw new Error(data.message || "Authentication failed");
       }
 
-      login(data);
+      dispatch(login({ user: data.user || data, token: data.token }));
       onClose();
     } catch (err: any) {
       setError(err.message);

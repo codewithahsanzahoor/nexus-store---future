@@ -1,14 +1,21 @@
 
 import React from 'react';
-import { CartItem } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store/store';
+import { clearCart } from '../store/slices/cartSlice';
 
-interface CheckoutProps {
-  cart: CartItem[];
-  onComplete: () => void;
-}
+const Checkout: React.FC = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const cart = useSelector((state: RootState) => state.cart.items);
+  
+  const handleComplete = () => {
+    dispatch(clearCart());
+    navigate('/');
+  };
 
-const Checkout: React.FC<CheckoutProps> = ({ cart, onComplete }) => {
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = cart.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in duration-700">
@@ -83,7 +90,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onComplete }) => {
           </section>
 
           <button 
-            onClick={onComplete}
+            onClick={handleComplete}
             className="w-full md:w-auto px-12 py-5 bg-primary text-background-dark font-black rounded-xl uppercase tracking-widest text-lg shadow-[0_0_30px_rgba(0,217,255,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3"
           >
             Continue to Payment <span className="material-symbols-outlined font-black">arrow_forward</span>
