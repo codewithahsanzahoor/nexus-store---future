@@ -1,9 +1,10 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSelector((state: RootState) => state.auth);
 
   if (!user) {
     return <Navigate to="/" replace />;
