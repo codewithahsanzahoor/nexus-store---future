@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { login } from "../store/slices/authSlice";
+import api from "../services/api";
+
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,29 +25,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
-      const endpoint = isLoginView ? "/api/auth/login" : "/api/auth/register";
+      const endpoint = isLoginView ? "/auth/login" : "/auth/register";
       const payload = isLoginView
         ? { email, password }
         : { name, email, password };
 
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Authentication failed");
-      }
+      const { data } = await api.post(endpoint, payload);
 
       dispatch(login({ user: data.user || data, token: data.token }));
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || "Authentication failed");
     } finally {
       setLoading(false);
     }

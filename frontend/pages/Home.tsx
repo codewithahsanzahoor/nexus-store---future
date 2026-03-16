@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Product } from "../types";
 import ProductCard from "../components/ProductCard";
+import api from "../services/api";
 
 interface HomeProps {
   onProductClick: (id: string) => void;
   onCategoryClick: (cat: string) => void;
 }
-
-const API_URL = "http://localhost:5000/api/products";
 
 const Home: React.FC<HomeProps> = ({ onProductClick, onCategoryClick }) => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,16 +18,17 @@ const Home: React.FC<HomeProps> = ({ onProductClick, onCategoryClick }) => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error(
-            `Server error: ${response.status} ${response.statusText}`,
-          );
-        }
-        const data = await response.json();
-        setProducts(data);
+        const { data } = await api.get("/products");
+        
+        // Map _id to id if backend provides _id
+        const mappedProducts = data.map((p: any) => ({
+          ...p,
+          id: p._id || p.id
+        }));
+        
+        setProducts(mappedProducts);
       } catch (err: any) {
-        setError(err.message || "Products load karne mein problem hui.");
+        setError(err.response?.data?.message || err.message || "Products load karne mein problem hui.");
       } finally {
         setLoading(false);
       }
@@ -204,7 +204,7 @@ const Home: React.FC<HomeProps> = ({ onProductClick, onCategoryClick }) => {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {trending.map((product) => (
+            {products.slice(0, 4).map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}

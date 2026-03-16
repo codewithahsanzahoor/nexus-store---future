@@ -1,7 +1,20 @@
 import express from "express";
-import { registerUser, loginUser } from "../controllers/authController.js";
+import {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  updateUserProfile,
+} from "../controllers/authController";
+import { protect } from "../middleware/authMiddleware";
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: User authentication and profile management
+ */
 
 /**
  * @swagger
@@ -20,12 +33,9 @@ const router = express.Router();
  *               - email
  *               - password
  *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
+ *               name: { type: string }
+ *               email: { type: string }
+ *               password: { type: string }
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -38,7 +48,7 @@ router.post("/register", registerUser);
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Login user
+ *     summary: Login a user
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -50,16 +60,55 @@ router.post("/register", registerUser);
  *               - email
  *               - password
  *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
+ *               email: { type: string }
+ *               password: { type: string }
  *     responses:
  *       200:
- *         description: Login successful, returns token
+ *         description: User logged in successfully
  *       401:
- *         description: Invalid credentials
+ *         description: Invalid email or password
  */
 router.post("/login", loginUser);
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile data
+ *       404:
+ *         description: User not found
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               email: { type: string }
+ *               password: { type: string }
+ *               phone: { type: string }
+ *               address:
+ *                 type: object
+ *                 properties:
+ *                   street: { type: string }
+ *                   city: { type: string }
+ *                   zipCode: { type: string }
+ *                   country: { type: string }
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ */
+router.route("/profile").get(protect, getUserProfile).put(protect, updateUserProfile);
 
 export default router;

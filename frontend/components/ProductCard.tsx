@@ -1,6 +1,8 @@
-
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Product } from '../types';
+import { RootState, AppDispatch } from '../store/store';
+import { toggleWishlist } from '../store/slices/wishlistSlice';
 
 interface ProductCardProps {
   product: Product;
@@ -9,10 +11,26 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, onAddToCart }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { items: wishlistItems } = useSelector((state: RootState) => state.wishlist);
+  
+  const productId = product.id || (product as any)._id;
+  const isWishlisted = wishlistItems.some(item => item.id === productId);
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Please login to use wishlist.");
+      return;
+    }
+    dispatch(toggleWishlist(productId));
+  };
+
   return (
     <div 
-      className="group bg-surface-dark border border-white/5 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1"
-      onClick={() => onClick(product.id)}
+      className="group bg-surface-dark border border-white/5 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 relative"
+      onClick={() => onClick(productId)}
     >
       <div className="aspect-[4/5] bg-accent-dark/50 relative overflow-hidden flex items-center justify-center p-8">
         {product.isNew && (
@@ -21,6 +39,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, onAddToCart
         {product.isBestseller && (
           <span className="absolute top-4 left-4 bg-primary text-background-dark text-[10px] font-black px-2 py-1 rounded tracking-widest uppercase shadow-[0_0_10px_rgba(0,217,255,0.4)]">Bestseller</span>
         )}
+        
+        {/* Wishlist Heart Icon */}
+        <button 
+          onClick={handleWishlistToggle}
+          className="absolute top-4 right-4 z-20 size-8 rounded-full bg-background-dark/50 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:text-primary transition-colors"
+        >
+          <span className={`material-symbols-outlined text-lg ${isWishlisted ? 'text-rose-500 fill-1' : ''}`}>
+            favorite
+          </span>
+        </button>
+
         <img 
           src={product.image} 
           alt={product.name} 

@@ -1,21 +1,80 @@
-
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { clearCart } from '../store/slices/cartSlice';
+import api from '../services/api';
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const cart = useSelector((state: RootState) => state.cart.items);
-  
-  const handleComplete = () => {
-    dispatch(clearCart());
-    navigate('/');
-  };
+  const { items: cart } = useSelector((state: RootState) => state.cart);
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  const [shippingAddress, setShippingAddress] = useState({
+    firstName: '',
+    lastName: '',
+    email: user?.email || '',
+    street: '',
+    city: '',
+    zipCode: '',
+    country: 'United States',
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (cart.length === 0) {
+    return <Navigate to="/catalog" replace />;
+  }
 
   const subtotal = cart.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
+  const totalAmount = subtotal * 1.08;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setShippingAddress({
+      ...shippingAddress,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const orderData = {
+        items: cart.map(item => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        })),
+        shippingAddress: {
+          street: shippingAddress.street,
+          city: shippingAddress.city,
+          zipCode: shippingAddress.zipCode,
+          country: shippingAddress.country
+        },
+        totalAmount: totalAmount
+      };
+
+      await api.post('/orders', orderData);
+
+      dispatch(clearCart());
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to place order');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in duration-700">
@@ -46,55 +105,105 @@ const Checkout: React.FC = () => {
         <div className="lg:col-span-7 space-y-12">
           <section>
             <h2 className="text-3xl font-black uppercase tracking-tighter italic mb-8">Shipping Information</h2>
-            <form className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <input className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="First Name" />
-                <input className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Last Name" />
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl mb-6 text-sm font-bold uppercase tracking-widest">
+                {error}
               </div>
-              <input className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Email Address" type="email" />
-              <input className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Street Address" />
+            )}
+            <form onSubmit={handlePlaceOrder} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <input 
+                  required
+                  name="firstName"
+                  value={shippingAddress.firstName}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" 
+                  placeholder="First Name" 
+                />
+                <input 
+                  required
+                  name="lastName"
+                  value={shippingAddress.lastName}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" 
+                  placeholder="Last Name" 
+                />
+              </div>
+              <input 
+                required
+                name="email"
+                type="email"
+                value={shippingAddress.email}
+                onChange={handleInputChange}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" 
+                placeholder="Email Address" 
+              />
+              <input 
+                required
+                name="street"
+                value={shippingAddress.street}
+                onChange={handleInputChange}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" 
+                placeholder="Street Address" 
+              />
               <div className="grid md:grid-cols-3 gap-6">
-                <input className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="City" />
-                <input className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="ZIP" />
-                <input className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Country" defaultValue="United States" />
+                <input 
+                  required
+                  name="city"
+                  value={shippingAddress.city}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" 
+                  placeholder="City" 
+                />
+                <input 
+                  required
+                  name="zipCode"
+                  value={shippingAddress.zipCode}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" 
+                  placeholder="ZIP" 
+                />
+                <input 
+                  required
+                  name="country"
+                  value={shippingAddress.country}
+                  onChange={handleInputChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:ring-1 focus:ring-primary focus:border-primary" 
+                  placeholder="Country" 
+                />
+              </div>
+
+              <div className="pt-8">
+                <h3 className="text-xl font-black uppercase tracking-tight mb-6">Shipping Method</h3>
+                <div className="grid md:grid-cols-2 gap-4 mb-10">
+                  <div className="border-2 border-primary bg-primary/5 p-6 rounded-2xl flex justify-between items-center cursor-pointer">
+                    <div className="flex items-center gap-4">
+                      <div className="size-6 rounded-full border-2 border-primary flex items-center justify-center p-1">
+                        <div className="size-full bg-primary rounded-full"></div>
+                      </div>
+                      <div>
+                        <p className="font-bold text-white uppercase tracking-tight">Standard Delivery</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">4-7 business days</p>
+                      </div>
+                    </div>
+                    <span className="font-black text-primary uppercase">Free</span>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full md:w-auto px-12 py-5 bg-primary text-background-dark font-black rounded-xl uppercase tracking-widest text-lg shadow-[0_0_30px_rgba(0,217,255,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {loading ? 'Processing Nexus...' : (
+                    <>
+                      Place Order <span className="material-symbols-outlined font-black">bolt</span>
+                    </>
+                  )}
+                </button>
               </div>
             </form>
           </section>
-
-          <section>
-            <h3 className="text-xl font-black uppercase tracking-tight mb-6">Shipping Method</h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="border-2 border-primary bg-primary/5 p-6 rounded-2xl flex justify-between items-center cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="size-6 rounded-full border-2 border-primary flex items-center justify-center p-1">
-                    <div className="size-full bg-primary rounded-full"></div>
-                  </div>
-                  <div>
-                    <p className="font-bold text-white uppercase tracking-tight">Standard Delivery</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">4-7 business days</p>
-                  </div>
-                </div>
-                <span className="font-black text-primary uppercase">Free</span>
-              </div>
-              <div className="border border-white/10 p-6 rounded-2xl flex justify-between items-center cursor-pointer hover:border-white/20">
-                <div className="flex items-center gap-4">
-                  <div className="size-6 rounded-full border border-white/10"></div>
-                  <div>
-                    <p className="font-bold text-slate-400 uppercase tracking-tight">Express Shipping</p>
-                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">1-2 business days</p>
-                  </div>
-                </div>
-                <span className="font-black text-slate-500 uppercase tracking-widest">$24.00</span>
-              </div>
-            </div>
-          </section>
-
-          <button 
-            onClick={handleComplete}
-            className="w-full md:w-auto px-12 py-5 bg-primary text-background-dark font-black rounded-xl uppercase tracking-widest text-lg shadow-[0_0_30px_rgba(0,217,255,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3"
-          >
-            Continue to Payment <span className="material-symbols-outlined font-black">arrow_forward</span>
-          </button>
         </div>
 
         <div className="lg:col-span-5">
@@ -126,7 +235,7 @@ const Checkout: React.FC = () => {
               </div>
               <div className="flex justify-between text-white text-[10px] font-black uppercase tracking-widest pt-3 border-t border-white/5">
                 <span className="text-sm font-black">Total</span>
-                <span className="text-2xl font-black text-primary tracking-tighter">${(subtotal * 1.08).toFixed(2)}</span>
+                <span className="text-2xl font-black text-primary tracking-tighter">${totalAmount.toFixed(2)}</span>
               </div>
             </div>
 

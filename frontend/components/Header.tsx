@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { logout } from "../store/slices/authSlice";
@@ -11,10 +11,20 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ cartCount }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/catalog?search=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm("");
+    }
+  };
 
   return (
     <>
@@ -47,16 +57,18 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center bg-white/5 border border-white/10 rounded-lg px-4 py-2 focus-within:border-primary/50 transition-all">
+            <form onSubmit={handleSearch} className="hidden md:flex items-center bg-white/5 border border-white/10 rounded-lg px-4 py-2 focus-within:border-primary/50 transition-all">
               <span className="material-symbols-outlined text-slate-500 text-lg">
                 search
               </span>
               <input
                 type="text"
                 placeholder="Search gear..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-transparent border-none focus:ring-0 text-sm w-48 placeholder:text-slate-600"
               />
-            </div>
+            </form>
 
             <Link
               to="/cart"
@@ -77,7 +89,7 @@ const Header: React.FC<HeaderProps> = ({ cartCount }) => {
                 <Link
                   to="/dashboard"
                   title="Dashboard"
-                  className="w-9 h-9 rounded-full border border-primary/30 overflow-hidden hover:border-primary transition-all flex items-center justify-center bg-primary/10 text-primary font-bold"
+                  className="w-9 h-9 rounded-full border border-primary/30 overflow-hidden hover:border-primary transition-all flex items-center justify-center bg-primary/10 text-primary font-bold text-sm"
                 >
                   {user.name.charAt(0).toUpperCase()}
                 </Link>
