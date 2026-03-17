@@ -21,6 +21,8 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
 import Dashboard from './pages/Dashboard';
+import Success from './pages/Success';
+import Cancel from './pages/Cancel';
 import GeminiAssistant from './components/GeminiAssistant';
 
 const ApiDocsRedirect: React.FC = () => {
@@ -89,6 +91,8 @@ const App: React.FC = () => {
           <Route path="/product/:id" element={<ProductDetail addToCart={addToCart} />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/success" element={<Success />} />
+          <Route path="/cancel" element={<Cancel />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/api-docs" element={<ApiDocsRedirect />} />

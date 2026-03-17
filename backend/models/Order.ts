@@ -19,6 +19,9 @@ export interface IOrder extends Document {
     zipCode: string;
     country: string;
   };
+  isPaid: boolean;
+  paidAt?: Date;
+  stripeSessionId?: string;
 }
 
 const OrderSchema: Schema = new Schema(
@@ -45,6 +48,9 @@ const OrderSchema: Schema = new Schema(
       zipCode: { type: String, required: true },
       country: { type: String, required: true },
     },
+    isPaid: { type: Boolean, required: true, default: false },
+    paidAt: { type: Date },
+    stripeSessionId: { type: String },
   },
   { timestamps: true }
 );

@@ -65,13 +65,15 @@ const Checkout: React.FC = () => {
         totalAmount: totalAmount
       };
 
-      await api.post('/orders', orderData);
+      const response = await api.post('/orders/create-checkout-session', orderData);
 
-      dispatch(clearCart());
-      navigate('/dashboard');
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      } else {
+        throw new Error('Failed to initialize Stripe checkout');
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Failed to place order');
-    } finally {
       setLoading(false);
     }
   };

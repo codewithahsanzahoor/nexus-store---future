@@ -1,18 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../store/store";
 import { fetchMyOrders } from "../store/slices/orderSlice";
 import { fetchProfile, updateProfile } from "../store/slices/profileSlice";
+import { addToCart } from "../store/slices/cartSlice";
+import ProductCard from "../components/ProductCard";
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { orders, loading: ordersLoading } = useSelector((state: RootState) => state.orders);
   const { profile, loading: profileLoading } = useSelector((state: RootState) => state.profile);
+  const { items: wishlistItems } = useSelector((state: RootState) => state.wishlist);
+  const { items: cartItems } = useSelector((state: RootState) => state.cart);
 
   // Edit Profile State
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'orders' | 'wishlist'>('orders');
+  
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -74,8 +81,6 @@ const Dashboard: React.FC = () => {
 
   // Calculate dynamic stats
   const activeOrdersCount = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
-  const totalSpent = orders.reduce((acc, o) => acc + o.totalAmount, 0).toFixed(2);
-  const nexusPoints = Math.floor(parseFloat(totalSpent) * 10);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 animate-in fade-in duration-700">
@@ -105,14 +110,48 @@ const Dashboard: React.FC = () => {
 
       <div className="grid lg:grid-cols-4 gap-6 mb-12">
         {[
-          { label: "LIFETIME", value: nexusPoints.toLocaleString(), sub: "Nexus Points", icon: "star" },
-          { label: "CURRENT", value: activeOrdersCount.toString().padStart(2, '0'), sub: "Active Orders", icon: "inventory_2" },
-          { label: "TOTAL SPENT", value: `$${totalSpent}`, sub: "Investment", icon: "payments" },
-          { label: "SAVED", value: "03", sub: "Payment Methods", icon: "account_balance_wallet" },
+          { 
+            label: "FAVORITES", 
+            value: wishlistItems.length.toString().padStart(2, '0'), 
+            sub: "Saved Items", 
+            icon: "favorite",
+            onClick: () => { setActiveTab('wishlist'); setIsEditing(false); },
+            active: !isEditing && activeTab === 'wishlist'
+          },
+          { 
+            label: "CURRENT", 
+            value: activeOrdersCount.toString().padStart(2, '0'), 
+            sub: "Active Orders", 
+            icon: "inventory_2",
+            onClick: () => { setActiveTab('orders'); setIsEditing(false); },
+            active: !isEditing && activeTab === 'orders'
+          },
+          { 
+            label: "CART", 
+            value: cartItems.length.toString().padStart(2, '0'), 
+            sub: "Items Ready", 
+            icon: "shopping_cart",
+            onClick: () => navigate('/cart'),
+            active: false
+          },
+          { 
+            label: "SAVED", 
+            value: "03", 
+            sub: "Payment Methods", 
+            icon: "account_balance_wallet",
+            onClick: () => {},
+            active: false
+          },
         ].map((stat) => (
-          <div key={stat.label} className="bg-surface-dark border border-white/5 p-8 rounded-2xl hover:border-primary/30 transition-all group">
+          <div 
+            key={stat.label} 
+            onClick={stat.onClick}
+            className={`bg-surface-dark border ${stat.active ? 'border-primary shadow-[0_0_15px_rgba(0,217,255,0.1)]' : 'border-white/5'} p-8 rounded-2xl hover:border-primary/30 transition-all group cursor-pointer`}
+          >
             <div className="flex items-center justify-between mb-4">
-              <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">{stat.icon}</span>
+              <span className={`material-symbols-outlined text-2xl group-hover:scale-110 transition-transform ${stat.active ? 'text-primary' : 'text-primary/70'}`}>
+                {stat.icon}
+              </span>
               <span className="text-[10px] font-black tracking-widest text-slate-600">{stat.label}</span>
             </div>
             <h4 className="text-4xl font-black text-white mb-1">{stat.value}</h4>
@@ -160,8 +199,30 @@ const Dashboard: React.FC = () => {
                 </button>
               </form>
             </div>
+          ) : activeTab === 'wishlist' ? (
+            <div className="bg-surface-dark border border-white/5 rounded-2xl p-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-black uppercase tracking-tight">Your Wishlist</h3>
+              </div>
+              {wishlistItems.length === 0 ? (
+                <div className="py-10 text-center border border-dashed border-white/10 rounded-xl">
+                  <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No favorites saved yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {wishlistItems.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onClick={(id) => { navigate(`/product/${id}`); window.scrollTo(0, 0); }}
+                      onAddToCart={(p) => dispatch(addToCart({ ...p, quantity: 1 }))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="bg-surface-dark border border-white/5 rounded-2xl p-8">
+            <div className="bg-surface-dark border border-white/5 rounded-2xl p-8 animate-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-2xl font-black uppercase tracking-tight">Recent Orders</h3>
                 {ordersLoading && <span className="text-xs text-primary animate-pulse font-bold">UPDATING NEXUS...</span>}
@@ -192,11 +253,13 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="space-y-6">
+          {/* Nexus Elite Section Hidden 
           <div className="bg-gradient-to-br from-primary to-secondary p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden group min-h-[250px]">
             <div className="absolute top-0 right-0 p-8 opacity-20 transform group-hover:scale-110 transition-transform"><span className="material-symbols-outlined text-[100px] font-black">bolt</span></div>
             <h3 className="text-3xl font-black text-background-dark uppercase italic leading-none">Nexus Elite</h3>
             <button className="bg-background-dark text-primary font-black py-4 rounded-xl uppercase tracking-widest text-xs hover:brightness-125 transition-all">Upgrade Now</button>
           </div>
+          */}
 
           <div className="bg-surface-dark border border-white/5 rounded-2xl p-8">
             <h3 className="text-xl font-black uppercase tracking-tight mb-6">Profile Details</h3>

@@ -19,16 +19,20 @@ const Home: React.FC<HomeProps> = ({ onProductClick, onCategoryClick }) => {
         setLoading(true);
         setError(null);
         const { data } = await api.get("/products");
-        
+
         // Map _id to id if backend provides _id
         const mappedProducts = data.map((p: any) => ({
           ...p,
-          id: p._id || p.id
+          id: p._id || p.id,
         }));
-        
+
         setProducts(mappedProducts);
       } catch (err: any) {
-        setError(err.response?.data?.message || err.message || "Products load karne mein problem hui.");
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Products load karne mein problem hui.",
+        );
       } finally {
         setLoading(false);
       }
@@ -87,7 +91,7 @@ const Home: React.FC<HomeProps> = ({ onProductClick, onCategoryClick }) => {
               The Future <br />
               Of <span className="text-primary not-italic">Audio</span>
             </h1>
-            <p className="text-lg text-slate-400 max-w-lg leading-relaxed font-light">
+            <p className="text-lg text-slate-400  leading-relaxed font-light">
               Experience sonic precision with the new Nexus-X series. Engineered
               for those who demand absolute clarity and uncompromising style.
             </p>

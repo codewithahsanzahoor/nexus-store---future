@@ -9,6 +9,7 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import { stripeWebhook } from "./controllers/orderController.js";
 
 const app = express();
 
@@ -19,6 +20,9 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// Stripe Webhook MUST come before express.json()
+app.post("/api/orders/webhook", express.raw({ type: "application/json" }), stripeWebhook);
 
 app.use(express.json());
 
