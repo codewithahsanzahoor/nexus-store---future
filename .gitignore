@@ -26,3 +26,8 @@ dist-ssr
 server/.env
 worktrees/
 server/worktrees/
+
+GEMINI.md
+config.bat
+temp_auto_push.bat
+temp_interactive_push.bat
